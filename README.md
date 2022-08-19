@@ -1,10 +1,6 @@
 # Timescale
 
-Extends the[Ecto](https://hexdocs.pm/ecto/Ecto.html) DSL for easily working with [TimescaleDB](https://docs.timescale.com/).
-
-Already using Ecto and [Postgres](https://hexdocs.pm/ecto_sql/Ecto.Adapters.Postgres.html)? Great, you're all set to start working with time-series data.
-
-_Built by [Bitfo](https://www.bitfo.com/careers/)_
+Extends the [Ecto](https://hexdocs.pm/ecto/Ecto.html) DSL for easily working with [TimescaleDB](https://docs.timescale.com/). Already using Ecto and [Postgres](https://hexdocs.pm/ecto_sql/Ecto.Adapters.Postgres.html)? Great, you're all set to start working with time-series data.
 
 ### Features
 
@@ -24,3 +20,5 @@ def deps do
   ]
 end
 ```
+
+_Built by [Bitfo](https://www.bitfo.com/careers/)_
