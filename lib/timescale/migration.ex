@@ -4,6 +4,24 @@ defmodule Timescale.Migration do
   """
 
   @doc """
+  Adds TimescaleDB as a Postgres extension
+  """
+  defmacro create_timescaledb_extension do
+    quote do
+      execute("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE")
+    end
+  end
+
+  @doc """
+  Drops TimescaleDB as a Postgres extension
+  """
+  defmacro drop_timescaledb_extension do
+    quote do
+      execute("DROP EXTENSION IF EXISTS timescaledb CASCADE")
+    end
+  end
+
+  @doc """
   Creates a new [hypertable](https://docs.timescale.com/api/latest/hypertable/create_hypertable/#create-hypertable) in an Ecto Migration.
 
   ```elixir

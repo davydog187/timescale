@@ -1,13 +1,33 @@
 defmodule Timescale.MixProject do
   use Mix.Project
 
+  @repo_url "https://github.com/bitfo/timescale"
+
   def project do
     [
       app: :timescale,
-      version: "0.1.0",
-      elixir: "~> 1.14-rc",
+      version: "0.0.1-alpha.1",
+      elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      name: "Timescale",
+      source_url: @repo_url,
+      homepage_url: @repo_url,
+      description: "Easy time-series data in TimescaleDB with Ecto",
+      package: package(),
+      docs: [
+        # The main page in the docs
+        main: "Timescale"
+      ]
+    ]
+  end
+
+  def package do
+    [
+      licenses: ["Apache 2.0"],
+      links: %{
+        "GitHub" => @repo_url
+      }
     ]
   end
 
@@ -21,8 +41,7 @@ defmodule Timescale.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:ex_doc, "~> 0.27", only: :dev, runtime: false}
     ]
   end
 end
