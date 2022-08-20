@@ -7,7 +7,97 @@ on:
       - main
 
 jobs:
-  test:
+  Credo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install (Elixir)
+        id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 25
+          elixir-version: 1.13
+
+      - name: Cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          key: elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-credo-${{ hashFiles('mix.lock') }}-${{ github.ref }}
+          restore-keys: |
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-credo-${{ hashFiles('mix.lock') }}-refs/heads/${{ github.event.repository.default_branch }}
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-credo-${{ hashFiles('mix.lock') }}
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-credo-
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-
+          path: |
+            _build
+            deps
+      - name: Install (Mix)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mix deps.get
+
+      - name: Credo
+        run: mix credo
+
+  Dialyzer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install (Elixir)
+        id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 25
+          elixir-version: 1.13
+
+      - name: Cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          key: elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-dialyzer-${{ hashFiles('mix.lock') }}-${{ github.ref }}
+          restore-keys: |
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-dialyzer-${{ hashFiles('mix.lock') }}-refs/heads/${{ github.event.repository.default_branch }}
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-dialyzer-${{ hashFiles('mix.lock') }}-
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-dialyzer-
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-
+          path: |
+            _build
+            deps
+      - name: Install (Mix)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mix deps.get
+
+      - name: Dialyzer
+        run: mix dialyzer
+
+  Format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install (Elixir)
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 25
+          elixir-version: 1.13
+
+      - name: Install (Mix)
+        run: mix deps.get
+
+      - name: Format
+        run: mix format --check-formatted
+
+  Test:
+    name: Test (Elixir ${{ matrix.versions.elixir }} OTP ${{ matrix.versions.otp }})
+    runs-on: ubuntu-latest
+
     services:
       db:
         image: postgres:14
@@ -20,18 +110,52 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    runs-on: ubuntu-latest
-    name: OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
     strategy:
+      fail-fast: false
       matrix:
-        otp: ["25.0.4"]
-        elixir: ["1.14.0-rc.1"]
+        versions:
+          - elixir: 1.11
+            otp: 23
+          - elixir: 1.12
+            otp: 24
+          - elixir: 1.13
+            otp: 25
+          - elixir: "1.14.0-rc.1"
+            otp: 25
+
+    env:
+      MIX_ENV: test
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: erlef/setup-beam@v1
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install (Elixir)
+        id: beam
+        uses: erlef/setup-beam@v1
         with:
-          otp-version: ${{matrix.otp}}
-          elixir-version: ${{matrix.elixir}}
-      - run: mix format --check-formatted
-      - run: mix deps.get
-      - run: mix test
+          elixir-version: ${{ matrix.versions.elixir }}
+          otp-version: ${{ matrix.versions.otp }}
+
+      - name: Cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          key: elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-test-${{ hashFiles('mix.lock') }}-${{ github.ref }}
+          restore-keys: |
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-test-${{ hashFiles('mix.lock') }}-refs/heads/${{ github.event.repository.default_branch }}
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-test-${{ hashFiles('mix.lock') }}
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-test-
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-
+          path: |
+            _build
+            deps
+      - name: Install (Mix)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mix deps.get
+
+      - name: Compile
+        run: mix compile --warnings-as-errors
+
+      - name: Test
+        run: mix test
