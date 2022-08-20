@@ -5,6 +5,7 @@ defmodule Timescale.MixProject do
 
   def project do
     [
+      aliases: aliases(),
       app: :timescale,
       version: "0.0.1-alpha.2",
       elixir: "~> 1.11",
@@ -48,6 +49,15 @@ defmodule Timescale.MixProject do
       {:ecto_sql, "~> 3.8", only: :test},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:postgrex, "~> 0.16.4", only: :test}
+    ]
+  end
+
+  defp aliases do
+    [
+      setup: ["deps.get", "ecto.setup"],
+      "ecto.setup": ["ecto.create", "ecto.migrate"],
+      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
     ]
   end
 end
