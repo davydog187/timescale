@@ -8,6 +8,7 @@ defmodule Timescale.MixProject do
       app: :timescale,
       version: "0.0.1-alpha.2",
       elixir: "~> 1.11",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "Timescale",
@@ -21,6 +22,9 @@ defmodule Timescale.MixProject do
       ]
     ]
   end
+
+  defp elixirc_paths(:test), do: elixirc_paths(:dev) ++ ["test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   def package do
     [
@@ -41,7 +45,9 @@ defmodule Timescale.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, "~> 0.27", only: :dev, runtime: false}
+      {:ecto_sql, "~> 3.8", only: :test},
+      {:ex_doc, "~> 0.27", only: :dev, runtime: false},
+      {:postgrex, "~> 0.16.4", only: :test}
     ]
   end
 end

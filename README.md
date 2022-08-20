@@ -1,5 +1,7 @@
 # Timescale
 
+<!-- MDOC !-->
+
 Extends the [Ecto](https://hexdocs.pm/ecto/Ecto.html) DSL for easily working with [TimescaleDB](https://docs.timescale.com/). Already using Ecto and [Postgres](https://hexdocs.pm/ecto_sql/Ecto.Adapters.Postgres.html)? Great, you're all set to start working with time-series data.
 
 ### Features
