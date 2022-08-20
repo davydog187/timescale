@@ -1,5 +1,7 @@
 # Timescale
 
+[![Build Status](https://github.com/bitfo/timescale/workflows/CI/badge.svg?branch=main)](https://github.com/bitfo/timescale/actions) [![Hex pm](https://img.shields.io/hexpm/v/timescale.svg?style=flat)](https://hex.pm/packages/timescale) [![Hexdocs.pm](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/timescale/)
+
 <!-- MDOC !-->
 
 Extends the [Ecto](https://hexdocs.pm/ecto/Ecto.html) DSL for easily working with [TimescaleDB](https://docs.timescale.com/). Already using Ecto and [Postgres](https://hexdocs.pm/ecto_sql/Ecto.Adapters.Postgres.html)? Great, you're all set to start working with time-series data.
