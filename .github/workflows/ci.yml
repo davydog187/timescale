@@ -1,5 +1,10 @@
 # create this in .github/workflows/ci.yml
-on: push
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
