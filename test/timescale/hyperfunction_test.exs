@@ -13,6 +13,13 @@ defmodule Timescale.HyperfunctionTest do
     )
   end
 
+  test "histogram/4 generates a valid query" do
+    assert_sql(
+      from(r in Table, select: histogram(r.a, 20, 60, 5)),
+      ~s[SELECT histogram(m0."a", 20, 60, 5) FROM "my_table" AS m0]
+    )
+  end
+
   test "last/2 generates a valid query" do
     assert_sql(
       from(r in Table, select: last(r.a, r.timestamp)),
