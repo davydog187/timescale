@@ -6,7 +6,7 @@ defmodule Timescale.MixProject do
   def project do
     [
       app: :timescale,
-      version: "0.0.1-alpha.1",
+      version: "0.0.1-alpha.2",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
