@@ -1,6 +1,7 @@
 defmodule Timescale do
   @external_resource "README.md"
-  @moduledoc File.read!("README.md")
+  @moduledoc @external_resource
+             |> File.read!()
              |> String.split("<!-- MDOC !-->")
              |> Enum.fetch!(1)
 end

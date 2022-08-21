@@ -44,7 +44,6 @@ defmodule Timescale.Migration do
   defmacro enable_hypertable_compression(table, opts) do
     segment_by = Keyword.fetch!(opts, :segment_by)
 
-    # TODO parse grammer DSL for segment_by
     quote bind_quoted: [table: table, segment_by: segment_by] do
       execute(
         "ALTER TABLE #{table} SET (timescaledb.compress, timescaledb.compress_segmentby = '#{segment_by}')"
@@ -57,8 +56,6 @@ defmodule Timescale.Migration do
   function
   """
   defmacro add_compression_policy(table, compress_after) do
-    # TODO figure out a better way to handle "INTERVAL" grammar for compress_after
-    # TODO add "if_not_exists" as a named option
     quote bind_quoted: [table: table, compress_after: compress_after] do
       execute("SELECT add_compression_policy('#{table}', #{compress_after})")
     end
@@ -67,9 +64,8 @@ defmodule Timescale.Migration do
   defp opts_to_sql_arg([]), do: ""
 
   defp opts_to_sql_arg(opts) do
-    ", " <>
-      Enum.map(opts, fn {k, v} ->
-        "#{k} => #{v}"
-      end)
+    Enum.map_join(opts, ", ", fn {k, v} ->
+      "#{k} => #{v}"
+    end)
   end
 end

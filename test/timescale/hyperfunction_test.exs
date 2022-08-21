@@ -1,10 +1,10 @@
 defmodule Timescale.HyperfunctionTest do
   use Timescale.SQLCase
 
-  alias TimescaleApp.Table
-
   import Timescale.Hyperfunctions
   import Ecto.Query, warn: false, except: [first: 2, last: 2]
+
+  alias TimescaleApp.Table
 
   test "first/2 generates a valid query" do
     assert_sql(
