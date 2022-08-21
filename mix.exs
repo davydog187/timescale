@@ -46,6 +46,8 @@ defmodule Timescale.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ecto_sql, "~> 3.8", only: :test},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:postgrex, "~> 0.16.4", only: :test}
