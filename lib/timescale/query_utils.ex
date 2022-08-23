@@ -28,9 +28,6 @@ defmodule Timescale.QueryUtils do
           optional_arg :: keyword()
         ) :: Macro.t()
   def dynamic_function_fragment(function_name, required_args, optional_args) do
-    # TODO: Perhaps we also match on: `{named_argument, {_value, type}}`
-    # and provide type casts since the Timescale docs provide the types for
-    # the optional args?
     optional_arg_fragment =
       Enum.map(optional_args, fn {named_argument, _value} ->
         "#{named_argument} => ?"
