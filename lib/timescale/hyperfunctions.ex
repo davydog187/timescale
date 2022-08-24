@@ -22,13 +22,13 @@ defmodule Timescale.Hyperfunctions do
   end
 
   @doc """
-  The histogram function represents the distribution of a set of values as an array of equal-width buckets. 
+  The histogram function represents the distribution of a set of values as an array of equal-width buckets.
   It partitions the dataset into a specified number of buckets (nbuckets) ranging from the inputted min and max values.
 
-  The return value is an array containing nbuckets+2 buckets, with the middle nbuckets bins for values in the 
-  stated range, the first bucket at the head of the array for values under the lower min bound, and the last bucket 
-  for values greater than or equal to the max bound. Each bucket is inclusive on its lower bound, 
-  and exclusive on its upper bound. Therefore, values equal to the min are included in the bucket starting with min, 
+  The return value is an array containing nbuckets+2 buckets, with the middle nbuckets bins for values in the
+  stated range, the first bucket at the head of the array for values under the lower min bound, and the last bucket
+  for values greater than or equal to the max bound. Each bucket is inclusive on its lower bound,
+  and exclusive on its upper bound. Therefore, values equal to the min are included in the bucket starting with min,
   but values equal to the max are in the last bucket.
 
   [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/histogram/)
@@ -70,7 +70,10 @@ defmodule Timescale.Hyperfunctions do
   [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/time_bucket/)
   """
   defmacro time_bucket(field, time_bucket, optional_args \\ []) do
-    dynamic_function_fragment(:time_bucket, [time_bucket, field], optional_args)
+    dynamic_function_fragment(:time_bucket, [time_bucket, field], optional_args, [
+      :offset,
+      :origin
+    ])
   end
 
   @doc """
@@ -84,6 +87,9 @@ defmodule Timescale.Hyperfunctions do
   [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/time_bucket_ng/)
   """
   defmacro time_bucket_ng(field, time_bucket, optional_args \\ []) do
-    dynamic_function_fragment(:time_bucket_ng, [time_bucket, field], optional_args)
+    dynamic_function_fragment(:time_bucket_ng, [time_bucket, field], optional_args, [
+      :origin,
+      :timezone
+    ])
   end
 end
