@@ -2,9 +2,8 @@ defmodule TimescaleApp.Table do
   use Ecto.Schema
 
   @primary_key false
-  schema "my_table" do
-    field(:a, :string)
-    field(:b, :string)
-    field(:timestamp, :naive_datetime)
+  schema "test_hypertable" do
+    field(:timestamp, :naive_datetime_usec)
+    field(:field, :float)
   end
 end
