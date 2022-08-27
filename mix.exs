@@ -30,6 +30,7 @@ defmodule Timescale.MixProject do
   def package do
     [
       licenses: ["Apache-2.0"],
+      files: ["lib", "mix.exs", "README.md", "LICENSE"],
       links: %{
         "GitHub" => @repo_url
       }
