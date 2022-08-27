@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  Hex:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install (Elixir)
+        id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 25
+          elixir-version: 1.13
+
+      - name: Cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          key: elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-release-${{ hashFiles('mix.lock') }}-${{ github.ref }}
+          restore-keys: |
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-release-${{ hashFiles('mix.lock') }}-refs/heads/${{ github.event.repository.default_branch }}
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-release-
+            elixir-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-
+          path: |
+            _build
+            deps
+
+      - name: Install (Mix)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: mix deps.get
+
+      - name: Compile
+        run: mix compile --docs
+
+      - name: Release
+        run: mix hex.publish --yes
+        with:
+          HEX_API_KEY: ${{ secrets.HEXPM_SECRET }}
