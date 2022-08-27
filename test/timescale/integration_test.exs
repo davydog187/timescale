@@ -37,23 +37,49 @@ defmodule Timescale.IntegrationTest do
            ]
   end
 
-  test "time_bucket/2 buckets each timestamp by the given interval " do
-    fixture(0.0, ~N[1989-09-22 12:00:00.000000])
-    fixture(1.0, ~N[1989-09-22 12:01:00.000000])
-    fixture(2.0, ~N[1989-09-22 12:02:00.000000])
-    fixture(3.0, ~N[1989-09-22 12:03:00.000000])
-    fixture(4.0, ~N[1989-09-22 12:04:00.000000])
-    fixture(5.0, ~N[1989-09-22 12:05:00.000000])
+  describe "time_bucket/2" do
+    test "buckets each timestamp by the given interval" do
+      fixture(0.0, ~N[1989-09-22 12:00:00.000000])
+      fixture(1.0, ~N[1989-09-22 12:01:00.000000])
+      fixture(2.0, ~N[1989-09-22 12:02:00.000000])
+      fixture(3.0, ~N[1989-09-22 12:03:00.000000])
+      fixture(4.0, ~N[1989-09-22 12:04:00.000000])
+      fixture(5.0, ~N[1989-09-22 12:05:00.000000])
 
-    assert Repo.all(from(t in Table, select: {t.field, time_bucket(t.timestamp, "2 minutes")})) ==
-             [
-               {0.0, ~N[1989-09-22 12:00:00.000000]},
-               {1.0, ~N[1989-09-22 12:00:00.000000]},
-               {2.0, ~N[1989-09-22 12:02:00.000000]},
-               {3.0, ~N[1989-09-22 12:02:00.000000]},
-               {4.0, ~N[1989-09-22 12:04:00.000000]},
-               {5.0, ~N[1989-09-22 12:04:00.000000]}
+      assert Repo.all(from(t in Table, select: {t.field, time_bucket(t.timestamp, "2 minutes")})) ==
+               [
+                 {0.0, ~N[1989-09-22 12:00:00.000000]},
+                 {1.0, ~N[1989-09-22 12:00:00.000000]},
+                 {2.0, ~N[1989-09-22 12:02:00.000000]},
+                 {3.0, ~N[1989-09-22 12:02:00.000000]},
+                 {4.0, ~N[1989-09-22 12:04:00.000000]},
+                 {5.0, ~N[1989-09-22 12:04:00.000000]}
+               ]
+    end
+
+    test "can set an origin with a named option" do
+      fixture(0.0, ~N[1989-09-22 12:00:00.000000])
+      fixture(1.0, ~N[1989-09-22 12:01:00.000000])
+      fixture(2.0, ~N[1989-09-22 12:02:00.000000])
+      fixture(3.0, ~N[1989-09-22 12:03:00.000000])
+      fixture(4.0, ~N[1989-09-22 12:04:00.000000])
+      fixture(5.0, ~N[1989-09-22 12:05:00.000000])
+
+      origin = ~N[1989-09-22 11:59:00.000000]
+
+      assert Repo.all(
+               from(t in Table,
+                 select: {t.field, time_bucket(t.timestamp, "2 minutes", origin: ^origin)}
+               )
+             ) == [
+               {0.0, ~N[1989-09-22 11:59:00.000000]},
+               {1.0, ~N[1989-09-22 12:01:00.000000]},
+               {2.0, ~N[1989-09-22 12:01:00.000000]},
+               {3.0, ~N[1989-09-22 12:03:00.000000]},
+               {4.0, ~N[1989-09-22 12:03:00.000000]},
+               {5.0, ~N[1989-09-22 12:05:00.000000]}
              ]
+    end
   end
 
   def fixture(value, timestamp \\ NaiveDateTime.utc_now()) do
