@@ -56,6 +56,12 @@ defmodule Timescale.MigrationUtils do
     select_query = "SELECT #{function_name}(#{all_function_args})"
 
     # Extract the values for the optional arguments
+    required_args =
+      Enum.map(required_args, fn
+        {value, _type} -> value
+        value -> value
+      end)
+
     all_function_args = required_args ++ Enum.map(optional_args, fn {_arg, value} -> value end)
 
     quote do

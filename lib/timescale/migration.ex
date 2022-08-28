@@ -33,8 +33,9 @@ defmodule Timescale.Migration do
   defmacro create_hypertable(relation, time_column_name, opts \\ []) do
     relation = normalize_arg(relation)
     time_column_name = normalize_arg(time_column_name)
+    required_args = [{relation, :text}, {time_column_name, :text}]
 
-    select_migration(:create_hypertable, [{relation, :text}, {time_column_name, :text}], opts, [
+    select_migration(:create_hypertable, required_args, opts, [
       :partitioning_column,
       :number_partitions,
       :chunk_time_interval,
