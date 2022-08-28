@@ -8,7 +8,7 @@ defmodule Timescale.Migration do
   """
   defmacro create_timescaledb_extension do
     quote do
-      execute("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE")
+      Ecto.Migration.execute("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE")
     end
   end
 
@@ -17,7 +17,7 @@ defmodule Timescale.Migration do
   """
   defmacro drop_timescaledb_extension do
     quote do
-      execute("DROP EXTENSION IF EXISTS timescaledb CASCADE")
+      Ecto.Migration.execute("DROP EXTENSION IF EXISTS timescaledb CASCADE")
     end
   end
 
@@ -32,7 +32,7 @@ defmodule Timescale.Migration do
     opts = opts_to_sql_arg(opts)
 
     quote bind_quoted: [table: table, field: field, opts: opts] do
-      execute("SELECT create_hypertable('#{table}', '#{field}'#{opts})")
+      Ecto.Migration.execute("SELECT create_hypertable('#{table}', '#{field}'#{opts})")
     end
   end
 
@@ -45,7 +45,7 @@ defmodule Timescale.Migration do
     segment_by = Keyword.fetch!(opts, :segment_by)
 
     quote bind_quoted: [table: table, segment_by: segment_by] do
-      execute(
+      Ecto.Migration.execute(
         "ALTER TABLE #{table} SET (timescaledb.compress, timescaledb.compress_segmentby = '#{segment_by}')"
       )
     end
@@ -57,7 +57,7 @@ defmodule Timescale.Migration do
   """
   defmacro add_compression_policy(table, compress_after) do
     quote bind_quoted: [table: table, compress_after: compress_after] do
-      execute("SELECT add_compression_policy('#{table}', #{compress_after})")
+      Ecto.Migration.execute("SELECT add_compression_policy('#{table}', #{compress_after})")
     end
   end
 
