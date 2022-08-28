@@ -47,6 +47,7 @@ defmodule Timescale.MigrationUtils do
       |> Enum.with_index(1)
       |> Enum.map(fn
         {{_, :text}, index} -> "$#{index}::TEXT"
+        {{_, :interval}, index} -> "$#{index}::TEXT::INTERVAL"
         {_, index} -> "$#{index}"
       end)
       |> Kernel.++(optional_arg_placeholders)

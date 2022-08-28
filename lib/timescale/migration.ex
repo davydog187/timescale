@@ -61,7 +61,7 @@ defmodule Timescale.Migration do
 
     quote bind_quoted: [table: table, segment_by: segment_by] do
       Ecto.Migration.execute(
-        "ALTER TABLE #{table} SET (timescaledb.compress, timescaledb.compress_segmentby = '#{segment_by}')"
+        "ALTER TABLE #{table} SET (timescaledb.compress = true, timescaledb.compress_segmentby = '#{segment_by}')"
       )
     end
   end
@@ -70,11 +70,12 @@ defmodule Timescale.Migration do
   Adds a compression policy to a hypertable using the [add_compression_policy](https://docs.timescale.com/api/latest/compression/add_compression_policy/#add-compression-policy)
   function
   """
-  defmacro add_compression_policy(table, compress_after, opts \\ []) do
-    table = normalize_arg(table)
+  defmacro add_compression_policy(hypertable, compress_after, opts \\ []) do
+    hypertable = normalize_arg(hypertable)
     compress_after = normalize_arg(compress_after)
+    required_args = [{hypertable, :text}, {compress_after, :interval}]
 
-    select_migration(:add_compression_policy, [table, compress_after], opts, [
+    select_migration(:add_compression_policy, required_args, opts, [
       :if_not_exists
     ])
   end
