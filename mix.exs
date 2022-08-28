@@ -7,7 +7,7 @@ defmodule Timescale.MixProject do
     [
       aliases: aliases(),
       app: :timescale,
-      version: "0.0.1-alpha.2",
+      version: "0.0.1-alpha.3",
       elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -30,6 +30,7 @@ defmodule Timescale.MixProject do
   def package do
     [
       licenses: ["Apache-2.0"],
+      files: ["lib", "mix.exs", "README.md", "LICENSE"],
       links: %{
         "GitHub" => @repo_url
       }
@@ -48,7 +49,7 @@ defmodule Timescale.MixProject do
     [
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:ecto_sql, "~> 3.8", only: :test},
+      {:ecto_sql, "~> 3.8"},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:postgrex, "~> 0.16.4", only: :test}
     ]

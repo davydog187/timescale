@@ -10,7 +10,7 @@ defmodule Timescale.Migration do
   """
   defmacro create_timescaledb_extension do
     quote do
-      execute("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE")
+      Ecto.Migration.execute("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE")
     end
   end
 
@@ -19,7 +19,7 @@ defmodule Timescale.Migration do
   """
   defmacro drop_timescaledb_extension do
     quote do
-      execute("DROP EXTENSION IF EXISTS timescaledb CASCADE")
+      Ecto.Migration.execute("DROP EXTENSION IF EXISTS timescaledb CASCADE")
     end
   end
 
@@ -56,7 +56,7 @@ defmodule Timescale.Migration do
     segment_by = Keyword.fetch!(opts, :segment_by)
 
     quote bind_quoted: [table: table, segment_by: segment_by] do
-      execute(
+      Ecto.Migration.execute(
         "ALTER TABLE #{table} SET (timescaledb.compress, timescaledb.compress_segmentby = '#{segment_by}')"
       )
     end
