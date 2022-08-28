@@ -30,8 +30,11 @@ defmodule Timescale.Migration do
   create_hypertable(:conditions, :time)
   ```
   """
-  defmacro create_hypertable(table, field, opts \\ []) do
-    select_migration(:create_hypertable, [table, field], opts, [
+  defmacro create_hypertable(relation, time_column_name, opts \\ []) do
+    relation = normalize_arg(relation)
+    time_column_name = normalize_arg(time_column_name)
+
+    select_migration(:create_hypertable, [{relation, :text}, {time_column_name, :text}], opts, [
       :partitioning_column,
       :number_partitions,
       :chunk_time_interval,
@@ -67,6 +70,11 @@ defmodule Timescale.Migration do
   function
   """
   defmacro add_compression_policy(table, compress_after, opts \\ []) do
-    select_migration(:add_compression_policy, [table, compress_after], opts, [:if_not_exists])
+    table = normalize_arg(table)
+    compress_after = normalize_arg(compress_after)
+
+    select_migration(:add_compression_policy, [table, compress_after], opts, [
+      :if_not_exists
+    ])
   end
 end

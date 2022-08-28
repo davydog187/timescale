@@ -45,7 +45,10 @@ defmodule Timescale.MigrationUtils do
     all_function_args =
       required_args
       |> Enum.with_index(1)
-      |> Enum.map(fn {_, index} -> "$#{index}" end)
+      |> Enum.map(fn
+        {{_, :text}, index} -> "$#{index}::TEXT"
+        {_, index} -> "$#{index}"
+      end)
       |> Kernel.++(optional_arg_placeholders)
       |> Enum.join(", ")
 
@@ -61,6 +64,13 @@ defmodule Timescale.MigrationUtils do
       end)
     end
   end
+
+  @doc """
+  Use this function to normalize input to migrations so that either atoms
+  or strings can be provided for table and column names.
+  """
+  def normalize_arg(arg) when is_atom(arg), do: Atom.to_string(arg)
+  def normalize_arg(arg), do: arg
 
   defp validate_optional_args(function_name, optional_args, supported_args) do
     remaining_invalid_keys = Keyword.keys(optional_args) -- supported_args
