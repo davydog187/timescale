@@ -5,9 +5,50 @@ defmodule Timescale.Hyperfunctions do
   IT systems, marketing analytics, user behavior, financial metrics, and cryptocurrency.
 
   [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/)
+
+  ## Approximate Row Count
+
+  [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/approximate_row_count/)
+
+  Timescale offers a hyperfunction for retrieving the approximate row count of hypertables, possibly with a large numbers,
+  relatively quickly.
+
+  Rather than supporting it directly, we recommend that you use the following code if this is a useful feature to your
+  application
+
+  ```elixir
+  defmacro approximate_row_count(repo, relation) do
+    query = "SELECT approximate_row_count($1::TEXT)"
+
+    quote do
+      {:ok, %Postgrex.Result{rows: [[num_rows]]}} =
+        Ecto.Adapters.SQL.query(unquote(repo), unquote(query), [unquote(relation)])
+
+      num_rows
+    end
+  end
+  ```
   """
 
   import Timescale.QueryUtils
+
+  @doc """
+  Get approximate row count for hypertable, distributed hypertable, or regular PostgreSQL table based on catalog estimates.
+  This function supports tables with nested inheritance and declarative partitioning.
+
+  The accuracy of approximate_row_count depends on the database having up-to-date statistics about the table or hypertable,
+  which are updated by VACUUM, ANALYZE, and a few DDL commands. If you have auto-vacuum configured on your table or hypertable,
+  or changes to the table are relatively infrequent, you might not need to explicitly ANALYZE your table as shown below.
+  Otherwise, if your table statistics are too out-of-date, running this command updates your statistics and yields more
+  accurate approximation results.
+
+  [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/approximate_row_count/)
+  """
+  defmacro approximate_row_count(relation) do
+    quote do
+      fragment("approximate_row_count(?)", unquote(relation))
+    end
+  end
 
   @doc """
   The first aggregate allows you to get the value of one column as ordered by another.
