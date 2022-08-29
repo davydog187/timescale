@@ -3,6 +3,8 @@ defmodule Timescale.Migration do
   This module provides helpers for installing TimescaleDB, as well as creating, modifying, and configuring Timescale resources.
   """
 
+  import Timescale.MigrationUtils
+
   @doc """
   Adds TimescaleDB as a Postgres extension
   """
@@ -28,12 +30,25 @@ defmodule Timescale.Migration do
   create_hypertable(:conditions, :time)
   ```
   """
-  defmacro create_hypertable(table, field, opts \\ []) do
-    opts = opts_to_sql_arg(opts)
+  defmacro create_hypertable(relation, time_column_name, opts \\ []) do
+    relation = normalize_arg(relation)
+    time_column_name = normalize_arg(time_column_name)
+    required_args = [{relation, :text}, {time_column_name, :text}]
 
-    quote bind_quoted: [table: table, field: field, opts: opts] do
-      Ecto.Migration.execute("SELECT create_hypertable('#{table}', '#{field}'#{opts})")
-    end
+    select_migration(:create_hypertable, required_args, opts, [
+      :partitioning_column,
+      :number_partitions,
+      :chunk_time_interval,
+      :create_default_indexes,
+      :if_not_exists,
+      :partitioning_func,
+      :associated_schema_name,
+      :associated_table_prefix,
+      :migrate_data,
+      :time_partitioning_func,
+      :replication_factor,
+      :data_nodes
+    ])
   end
 
   @doc """
@@ -41,12 +56,12 @@ defmodule Timescale.Migration do
 
   See the [ALTER TABLE (Compression)](https://docs.timescale.com/api/latest/compression/alter_table_compression/) documentation
   """
-  defmacro enable_hypertable_compression(table, opts) do
+  defmacro enable_hypertable_compression(table, opts \\ []) do
     segment_by = Keyword.fetch!(opts, :segment_by)
 
     quote bind_quoted: [table: table, segment_by: segment_by] do
       Ecto.Migration.execute(
-        "ALTER TABLE #{table} SET (timescaledb.compress, timescaledb.compress_segmentby = '#{segment_by}')"
+        "ALTER TABLE #{table} SET (timescaledb.compress = true, timescaledb.compress_segmentby = '#{segment_by}')"
       )
     end
   end
@@ -55,17 +70,13 @@ defmodule Timescale.Migration do
   Adds a compression policy to a hypertable using the [add_compression_policy](https://docs.timescale.com/api/latest/compression/add_compression_policy/#add-compression-policy)
   function
   """
-  defmacro add_compression_policy(table, compress_after) do
-    quote bind_quoted: [table: table, compress_after: compress_after] do
-      Ecto.Migration.execute("SELECT add_compression_policy('#{table}', #{compress_after})")
-    end
-  end
+  defmacro add_compression_policy(hypertable, compress_after, opts \\ []) do
+    hypertable = normalize_arg(hypertable)
+    compress_after = normalize_arg(compress_after)
+    required_args = [{hypertable, :text}, {compress_after, :interval}]
 
-  defp opts_to_sql_arg([]), do: ""
-
-  defp opts_to_sql_arg(opts) do
-    Enum.map_join(opts, ", ", fn {k, v} ->
-      "#{k} => #{v}"
-    end)
+    select_migration(:add_compression_policy, required_args, opts, [
+      :if_not_exists
+    ])
   end
 end

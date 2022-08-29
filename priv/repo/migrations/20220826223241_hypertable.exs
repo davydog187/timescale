@@ -10,5 +10,7 @@ defmodule TimescaleApp.Repo.Migrations.Hypertable do
     end
 
     create_hypertable(:test_hypertable, :timestamp)
+    enable_hypertable_compression(:test_hypertable, segment_by: :timestamp)
+    add_compression_policy(:test_hypertable, "60d")
   end
 end

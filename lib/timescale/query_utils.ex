@@ -17,6 +17,7 @@ defmodule Timescale.QueryUtils do
     t in Table,
     select: time_bucket(t.timestamp, "5 minutes", origin: "1900-01-01", timezone: "Europe/Athens")
   )
+  ```
 
   Would yield the following SQL query:
 
