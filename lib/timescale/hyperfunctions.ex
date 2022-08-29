@@ -10,8 +10,8 @@ defmodule Timescale.Hyperfunctions do
 
   [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/approximate_row_count/)
 
-  Timescale offers a hyperfunction for retrieving the approximate row count of hypertables, possibly with a large numbers,
-  relatively quickly.
+  Timescale offers a hyperfunction, `approximate_row_count` for retrieving the approximate row count of hypertables.
+  This hyperfunction may be useful for tables with a large number of rows, where the exact number is not needed.
 
   Rather than supporting it directly, we recommend that you use the following code if this is a useful feature to your
   application
