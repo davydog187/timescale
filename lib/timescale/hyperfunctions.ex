@@ -87,9 +87,14 @@ defmodule Timescale.Hyperfunctions do
   [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/time_bucket_ng/)
   """
   defmacro time_bucket_ng(field, time_bucket, optional_args \\ []) do
-    dynamic_function_fragment(:time_bucket_ng, [time_bucket, field], optional_args, [
-      :origin,
-      :timezone
-    ])
+    dynamic_function_fragment(
+      :"timescaledb_experimental.time_bucket_ng",
+      [time_bucket, field],
+      optional_args,
+      [
+        :origin,
+        :timezone
+      ]
+    )
   end
 end

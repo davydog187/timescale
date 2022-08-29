@@ -68,13 +68,13 @@ defmodule Timescale.HyperfunctionTest do
   test "time_bucket_ng/2 generates a valid query" do
     assert_sql(
       from(t in Table, select: time_bucket_ng(t.timestamp, "5 years")),
-      ~s[SELECT time_bucket_ng('5 years', t0."timestamp") FROM "test_hypertable" AS t0]
+      ~s[SELECT timescaledb_experimental.time_bucket_ng('5 years', t0."timestamp") FROM "test_hypertable" AS t0]
     )
   end
 
   test "time_bucket_ng/2 should raise an error if an invalid option is provided" do
     assert_raise Timescale.OptionalArgError,
-                 "The time_bucket_ng TimescaleDB function does support the following options: [:invalid_opt]",
+                 "The timescaledb_experimental.time_bucket_ng TimescaleDB function does support the following options: [:invalid_opt]",
                  fn ->
                    Code.eval_string("""
                    import Ecto.Query
@@ -93,7 +93,7 @@ defmodule Timescale.HyperfunctionTest do
         select:
           time_bucket_ng(t.timestamp, "5 minutes", origin: "1900-01-01", timezone: "Europe/Athens")
       ),
-      ~s[SELECT time_bucket_ng('5 minutes', t0."timestamp", origin => '1900-01-01', timezone => 'Europe/Athens') FROM "test_hypertable" AS t0]
+      ~s[SELECT timescaledb_experimental.time_bucket_ng('5 minutes', t0."timestamp", origin => '1900-01-01', timezone => 'Europe/Athens') FROM "test_hypertable" AS t0]
     )
 
     assert_sql(
@@ -101,7 +101,7 @@ defmodule Timescale.HyperfunctionTest do
         select:
           time_bucket_ng(t.timestamp, "5 minutes", timezone: "Europe/Athens", origin: "1900-01-01")
       ),
-      ~s[SELECT time_bucket_ng('5 minutes', t0."timestamp", timezone => 'Europe/Athens', origin => '1900-01-01') FROM "test_hypertable" AS t0]
+      ~s[SELECT timescaledb_experimental.time_bucket_ng('5 minutes', t0."timestamp", timezone => 'Europe/Athens', origin => '1900-01-01') FROM "test_hypertable" AS t0]
     )
   end
 end
