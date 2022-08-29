@@ -13,16 +13,17 @@ defmodule Timescale.Hyperfunctions do
   Timescale offers a hyperfunction, `approximate_row_count`, for retrieving the approximate row count of hypertables.
   This hyperfunction may be useful for tables with a large number of rows, where the exact number is not needed.
 
-  Rather than supporting it directly, we recommend that you use the following code if this is a useful feature to your
-  application
+  As Ecto does not support raw SQL through the [Ecto.Query](https://hexdocs.pm/ecto/Ecto.Query.html) API, we have chosen
+  not to directly support `approximate_row_count`, for it be an inconsistent API.
+  If this is a useful feature to your application, you can use the following code:
 
   ```elixir
-  defmacro approximate_row_count(repo, relation) do
+  defmacro approximate_row_count(relation) do
     query = "SELECT approximate_row_count($1::TEXT)"
 
     quote do
       {:ok, %Postgrex.Result{rows: [[num_rows]]}} =
-        Ecto.Adapters.SQL.query(unquote(repo), unquote(query), [unquote(relation)])
+        Ecto.Adapters.SQL.query(MyApp.MyRepo, unquote(query), [unquote(relation)])
 
       num_rows
     end
