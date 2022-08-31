@@ -27,7 +27,7 @@ defmodule MyApp.Repo.Migrations.SetupTimescale do
   import Timescale.Migration
 
   def up do
-    add_timescaledb_extension()
+    create_timescaledb_extension()
   end
 
   def down do
