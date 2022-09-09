@@ -71,7 +71,7 @@ Make Postgres a service that is started automatically
 $ brew services start postgresql
 ```
 
-Then install Timescaledb
+Then install TimescaleDB. For more information about installing TimescaleDB on MacOS, see the [official documentation](https://docs.timescale.com/install/latest/self-hosted/installation-macos/#install-self-hosted-timescaledb-using-homebrew).
 
 ```shell
 $ brew tap timescaledb/tap
