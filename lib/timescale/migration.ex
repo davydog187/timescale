@@ -55,9 +55,12 @@ defmodule Timescale.Migration do
   Enables compression on an existing hypertable
 
   See the [ALTER TABLE (Compression)](https://docs.timescale.com/api/latest/compression/alter_table_compression/) documentation
+
+  ## Required arguments
+  * `:segment_by` - Column list on which to key the compressed segments
   """
-  defmacro enable_hypertable_compression(table, opts \\ []) do
-    segment_by = Keyword.fetch!(opts, :segment_by)
+  defmacro enable_hypertable_compression(table, args \\ []) do
+    segment_by = Keyword.fetch!(args, :segment_by)
 
     quote bind_quoted: [table: table, segment_by: segment_by] do
       Ecto.Migration.execute(
