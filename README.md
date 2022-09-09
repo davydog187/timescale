@@ -16,7 +16,7 @@ Extends the [Ecto](https://hexdocs.pm/ecto/Ecto.html) DSL for easily working wit
 
 1. Make sure your database has Timescale correctly installed
 2. Create a new Ecto migration
-3. Call the `add_timescaledb_extension/0` and `drop_timescaledb_extension/0` in your migration
+3. Call the `create_timescaledb_extension/0` and `drop_timescaledb_extension/0` in your migration
 
 E.g.
 
@@ -71,7 +71,7 @@ Make Postgres a service that is started automatically
 $ brew services start postgresql
 ```
 
-Then install Timescaledb
+Then install TimescaleDB. For more information about installing TimescaleDB on MacOS, see the [official documentation](https://docs.timescale.com/install/latest/self-hosted/installation-macos/#install-self-hosted-timescaledb-using-homebrew).
 
 ```shell
 $ brew tap timescaledb/tap
