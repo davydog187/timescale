@@ -16,7 +16,7 @@ Extends the [Ecto](https://hexdocs.pm/ecto/Ecto.html) DSL for easily working wit
 
 1. Make sure your database has Timescale correctly installed
 2. Create a new Ecto migration
-3. Call the `add_timescaledb_extension/0` and `drop_timescaledb_extension/0` in your migration
+3. Call the `create_timescaledb_extension/0` and `drop_timescaledb_extension/0` in your migration
 
 E.g.
 
