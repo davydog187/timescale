@@ -82,4 +82,17 @@ defmodule Timescale.Migration do
       :if_not_exists
     ])
   end
+
+  @doc """
+  Removes a compression policy from a hypertable using the [remove_compression_policy](https://docs.timescale.com/api/latest/compression/remove_compression_policy/#remove-compression-policy)
+  function
+  """
+  defmacro remove_compression_policy(hypertable, opts \\ []) do
+    hypertable = normalize_arg(hypertable)
+    required_args = [{hypertable, :text}]
+
+    select_migration(:remove_compression_policy, required_args, opts, [
+      :if_exists
+    ])
+  end
 end
