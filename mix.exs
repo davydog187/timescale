@@ -7,7 +7,7 @@ defmodule Timescale.MixProject do
     [
       aliases: aliases(),
       app: :timescale,
-      version: "0.0.1-alpha.3",
+      version: "0.0.1-alpha.4",
       elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
