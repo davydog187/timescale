@@ -1,0 +1,95 @@
+# Intro to Timescale
+
+```elixir
+Mix.install([
+  {:timescale, path: "../timescale"},
+  {:kino_db, "~> 0.2.0"},
+  {:jason, "~> 1.4"},
+  {:postgrex, "~> 0.16.5"}
+])
+
+# Add https://github.com/vorce/kino_ecto
+```
+
+## Building a health tracker
+
+Let's learn about using the `timescale` Elixir library for [TimescaleDB](https://www.timescale.com/).
+
+For our example, let's imagine we're building a fitness application that tracks your heart rate through a wearable device. Our application will receive (literal) heartbeats from the wearable device at varying intervals that we will record into the database.
+
+## Setting up the Repo
+
+To get started, you'll need to set up secrets for connecting to a database. This will also require creating a Postgres database. Try the following commands in your shell:
+
+```shell
+$ psql -c 'create database timescale_fitness'
+```
+
+```elixir
+defmodule Fitness.Repo do
+  use Ecto.Repo,
+    otp_app: :fitness,
+    adapter: Ecto.Adapters.Postgres
+
+  def init(_type, config) do
+    {:ok,
+     Keyword.merge(config,
+       migration_lock: :pg_advisory_lock,
+       hostname: System.fetch_env!("LB_POSTGRES_HOST"),
+       port: 5432,
+       username: System.fetch_env!("LB_POSTGRES_USER"),
+       password: System.fetch_env!("LB_POSTGRES_PASSWORD"),
+       # If using Fly, enable IPv6 below
+       # socket_options: [:inet6],
+       database: System.fetch_env!("LB_POSTGRES_DATABASE")
+     )}
+  end
+
+  # Helper function for LiveBook demonstrations.
+  def migrate({num, migration}, direction) when is_atom(migration) do
+    {:ok, _, _} =
+      Ecto.Migrator.with_repo(__MODULE__, fn repo ->
+        Ecto.Migrator.run(repo, [{num, migration}], direction, all: true)
+      end)
+
+    "Successfully Migrated #{inspect(migration)}"
+  end
+end
+
+alias Fitness.Repo
+{:ok, repo_pid} = Kino.start_child(Repo)
+```
+
+## Creating our hypertable migration
+
+```elixir
+defmodule Fitness.Repo.Migrations.CreateHeartbeat do
+  use Ecto.Migration
+
+  import Timescale.Migration
+
+  def up do
+    create_timescaledb_extension()
+
+    create_if_not_exists table(:users) do
+      add(:fullname, :string)
+    end
+
+    create_if_not_exists table(:heartbeats, primary_key: false) do
+      add(:timestamp, :naive_datetime_usec, null: false)
+      add(:user_id, references(:users), null: false)
+    end
+
+    create_hypertable(:heartbeats, :timestamp)
+  end
+
+  def down do
+    drop(table("heartbeats"), mode: :cascade)
+    drop(table("users"), mode: :cascade)
+
+    drop_timescaledb_extension()
+  end
+end
+
+Repo.migrate({0, Fitness.Repo.Migrations.CreateHeartbeat}, :up)
+```
