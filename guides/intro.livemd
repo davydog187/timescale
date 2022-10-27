@@ -108,24 +108,23 @@ Repo.migrate({0, Fitness.Repo.Migrations.CreateHeartbeat}, :up)
 
 ## Insert some mock data
 
-```elixir
-Repo.insert_all(
-  "users",
-  [
-    %{fullname: "Dave Lucia"},
-    %{fullname: "Alex Koutmos"}
-  ],
-  on_conflict: :nothing
-)
+To facilitate our example, let's create two users who are tracking their heartbeats.
 
-[
-  dave,
-  alex
-] =
-  Repo.all(
-    from(u in "users", order_by: [desc: u.fullname], select: %{id: u.id, fullname: u.fullname})
-  )
+```elixir
+users = [
+  %{fullname: "Dave Lucia"},
+  %{fullname: "Alex Koutmos"}
+]
+
+Repo.insert_all("users", users, on_conflict: :nothing)
+
+query =
+  from(u in "users", order_by: [desc: u.fullname], select: %{id: u.id, fullname: u.fullname})
+
+[dave, alex] = Repo.all(query)
 ```
+
+Next, we've built a little module to help us simulate heartbeats for an entire day.
 
 ```elixir
 defmodule Fitness.Generator do
@@ -153,6 +152,8 @@ defmodule Fitness.Generator do
   end
 end
 ```
+
+Next, we generate heartbeats for each user, and batch insert them into the database.
 
 ```elixir
 batch_insert = fn heartbeats ->
@@ -186,11 +187,11 @@ Repo.all(
 )
 ```
 
-Ok, so not so interesting, but we can validate that our data is in the correct time range.
+Ok, so not so interesting, but we can validate that our data starts roughly at the beginning of today and ends towards midnight.
 
-For more of a challenge, let's use the [time_bucket](https://docs.timescale.com/api/latest/hyperfunctions/time_bucket/) hyperfunction to calculate the average BPM for each hour.
+For more of a challenge, let's use the [time_bucket](https://docs.timescale.com/api/latest/hyperfunctions/time_bucket/) hyperfunction to calculate average BPM for each hour.
 
-Let's first explore how the `time_bucket` hyperfunction works.
+First, let's explore how the `time_bucket` hyperfunction works.
 
 ```elixir
 Repo.all(
@@ -198,6 +199,21 @@ Repo.all(
     where: h.user_id == ^dave_id,
     select: {h.timestamp, time_bucket(h.timestamp, "1 second")},
     limit: 20
+  )
+)
+```
+
+The first item in each tuple is the actual timestamp of the heartbeat, down to the microsecond. The second item is the result of `time_bucket/2` on the timestamp, bucketed down to the nearest second. `time_bucket/2` acts like the [floor/1](https://hexdocs.pm/elixir/Kernel.html#floor/1) math function, and as we'll see in a moment, enables further aggregation over time-series.
+
+```elixir
+Repo.all(
+  from(h in "heartbeats",
+    where: h.user_id == ^dave_id,
+    group_by: selected_as(:minute),
+    select: %{
+      minute: selected_as(time_bucket(h.timestamp, "1 minute"), :minute),
+      bpm: count(h)
+    }
   )
 )
 ```
