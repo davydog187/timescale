@@ -25,6 +25,15 @@ To get started, you'll need to set up secrets for connecting to a database. This
 $ psql -c 'create database timescale_fitness'
 ```
 
+<!-- livebook:{"break_markdown":true} -->
+
+You'll also need to set the following secrets in Livebook
+
+* `POSTGRES_HOST` - postgres hostname to connect to (default `localhost`)
+* `POSTGRES_USER` - postgres username to connect with (default `postgres`)
+* `POSTGRES_PASS` - postgres password to connect with (default `postgres`)
+* `POSTGRES_DATABASE` - database name (default `timescale_fitness`)
+
 ```elixir
 defmodule Fitness.Repo do
   use Ecto.Repo,
@@ -35,13 +44,13 @@ defmodule Fitness.Repo do
     {:ok,
      Keyword.merge(config,
        migration_lock: :pg_advisory_lock,
-       hostname: System.fetch_env!("LB_POSTGRES_HOST"),
+       hostname: System.get_env("LB_POSTGRES_HOST", "localhost"),
        port: 5432,
-       username: System.fetch_env!("LB_POSTGRES_USER"),
-       password: System.fetch_env!("LB_POSTGRES_PASSWORD"),
+       username: System.get_env("LB_POSTGRES_USER", "postgres"),
+       password: System.get_env("LB_POSTGRES_PASSWORD", "postgres"),
        # If using Fly, enable IPv6 below
        # socket_options: [:inet6],
-       database: System.fetch_env!("LB_POSTGRES_DATABASE")
+       database: System.get_env("LB_POSTGRES_DATABASE", "timescale_fitness")
      )}
   end
 
@@ -57,6 +66,7 @@ defmodule Fitness.Repo do
 end
 
 alias Fitness.Repo
+import Ecto.Query, except: [first: 2, last: 2]
 {:ok, repo_pid} = Kino.start_child(Repo)
 ```
 
@@ -75,6 +85,8 @@ defmodule Fitness.Repo.Migrations.CreateHeartbeat do
       add(:fullname, :string)
     end
 
+    create_if_not_exists(unique_index(:users, [:fullname]))
+
     create_if_not_exists table(:heartbeats, primary_key: false) do
       add(:timestamp, :naive_datetime_usec, null: false)
       add(:user_id, references(:users), null: false)
@@ -92,4 +104,100 @@ defmodule Fitness.Repo.Migrations.CreateHeartbeat do
 end
 
 Repo.migrate({0, Fitness.Repo.Migrations.CreateHeartbeat}, :up)
+```
+
+## Insert some mock data
+
+```elixir
+Repo.insert_all(
+  "users",
+  [
+    %{fullname: "Dave Lucia"},
+    %{fullname: "Alex Koutmos"}
+  ],
+  on_conflict: :nothing
+)
+
+[
+  dave,
+  alex
+] =
+  Repo.all(
+    from(u in "users", order_by: [desc: u.fullname], select: %{id: u.id, fullname: u.fullname})
+  )
+```
+
+```elixir
+defmodule Fitness.Generator do
+  @ms_in_day :timer.hours(24)
+
+  @doc """
+  Given a date, will generate a list of heartbeats for the day,
+  represented as a list of maps with a `timestamp` field
+  """
+  @spec generate_heartbeats(%{id: integer()}, Date.t()) :: list(%{timestamp: NaiveDateTime.t()})
+  def generate_heartbeats(user, day) do
+    do_generate_heartbeats(user, [], NaiveDateTime.new!(day, ~T[00:00:00.000]), 0)
+  end
+
+  defp do_generate_heartbeats(user, heartbeats, day, ms) do
+    # keep it between 60-200 beats per minute
+    next = floor(:timer.minutes(1) / Enum.random(60..200)) + ms
+
+    if next < @ms_in_day do
+      heartbeat = %{timestamp: NaiveDateTime.add(day, next, :millisecond), user_id: user.id}
+      do_generate_heartbeats(user, [heartbeat | heartbeats], day, next)
+    else
+      Enum.reverse(heartbeats)
+    end
+  end
+end
+```
+
+```elixir
+batch_insert = fn heartbeats ->
+  heartbeats
+  |> Enum.chunk_every(100)
+  |> Enum.map(fn chunk ->
+    Repo.insert_all("heartbeats", chunk)
+  end)
+end
+
+# TODO try method in https://klotzandrew.com/blog/postgres-passing-65535-parameter-limit
+
+batch_insert.(Fitness.Generator.generate_heartbeats(dave, Date.utc_today()))
+batch_insert.(Fitness.Generator.generate_heartbeats(alex, Date.utc_today()))
+```
+
+## Querying with Timescale
+
+Now that we have a dataset generated, let's try some queries using Timescale [hyperfunctions](https://docs.timescale.com/api/latest/hyperfunctions/). Let's start with the basics, and try to get the first and last values in our timeseries, using the [first](https://docs.timescale.com/api/latest/hyperfunctions/first/) and [last](https://docs.timescale.com/api/latest/hyperfunctions/last/) hyperfunctions.
+
+```elixir
+dave_id = dave.id
+
+import Timescale.Hyperfunctions
+
+Repo.all(
+  from(h in "heartbeats",
+    where: h.user_id == ^dave_id,
+    select: {first(h.timestamp, h.timestamp), last(h.timestamp, h.timestamp)}
+  )
+)
+```
+
+Ok, so not so interesting, but we can validate that our data is in the correct time range.
+
+For more of a challenge, let's use the [time_bucket](https://docs.timescale.com/api/latest/hyperfunctions/time_bucket/) hyperfunction to calculate the average BPM for each hour.
+
+Let's first explore how the `time_bucket` hyperfunction works.
+
+```elixir
+Repo.all(
+  from(h in "heartbeats",
+    where: h.user_id == ^dave_id,
+    select: {h.timestamp, time_bucket(h.timestamp, "1 second")},
+    limit: 20
+  )
+)
 ```
