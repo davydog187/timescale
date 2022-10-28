@@ -88,8 +88,8 @@ defmodule Timescale.Hyperfunctions do
 
   This function also accepts the following optional parameters (passed in as a keyword list):
 
-  - `:offset` - The time interval used to offset all of the timebuckets by. (Postgres type: `INTERVAL`)
-  - `:origin` - The timestamp used to align all of the time buckets. (Postgres type: `TIMESTAMP`)
+  - `:offset` - The time interval used to offset all of the timebuckets by. (Postgres type: "INTERVAL")
+  - `:origin` - The timestamp used to align all of the time buckets. (Postgres type: "TIMESTAMP")
 
   [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/time_bucket/)
   """
@@ -105,8 +105,8 @@ defmodule Timescale.Hyperfunctions do
   you can aggregate by month, year or timezone.
   For example, `time_bucket_ng(timestamp, "5 years")` would allow you to group results into 5 year buckets.
 
-  - `:origin` - The timestamp used to align all of the time buckets. (Postgres type: `DATE`, `TIMESTAMP`, or `TIMESTAMPZ`)
-  - `:timezone` - The name of the timezone. (Postgres type: `TEXT`)
+  - `:origin` - The timestamp used to align all of the time buckets. (Postgres type: "DATE", "TIMESTAMP", or "TIMESTAMPZ")
+  - `:timezone` - The name of the timezone. (Postgres type: "TEXT")
 
   [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/time_bucket_ng/)
   """
