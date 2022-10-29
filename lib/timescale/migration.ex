@@ -70,6 +70,17 @@ defmodule Timescale.Migration do
   end
 
   @doc """
+  Disables compression on an existing hypertable. Note that chunks must be decompressed before its called
+
+  See the [ALTER TABLE (Compression)](https://docs.timescale.com/api/latest/compression/alter_table_compression/) documentation
+  """
+  defmacro disable_hypertable_compression(table) do
+    quote bind_quoted: [table: table] do
+      Ecto.Migration.execute("ALTER TABLE #{table} SET (timescaledb.compress = false)")
+    end
+  end
+
+  @doc """
   Adds a compression policy to a hypertable using the [add_compression_policy](https://docs.timescale.com/api/latest/compression/add_compression_policy/#add-compression-policy)
   function
   """
