@@ -308,5 +308,54 @@ defmodule Fitness.Repo.Migrations.CompressHeartbeats do
   end
 end
 
-Repo.migrate({0, Fitness.Repo.Migrations.CompressHeartbeats}, :up)
+Repo.migrate({1, Fitness.Repo.Migrations.CompressHeartbeats}, :up)
+```
+
+Now that we've compressed the table, we should observe that its size as been dramatically reduced. For some datasets, its common to see compression ratios of up to 96%.
+
+<!-- livebook:{"attrs":{"cache_query":true,"connection":{"type":"postgres","variable":"conn"},"query":"select pg_size_pretty(hypertable_size('heartbeats')) as heartbeats_size","result_variable":"result6","timeout":null},"kind":"Elixir.KinoDB.SQLCell","livebook_object":"smart_cell"} -->
+
+```elixir
+result6 =
+  Postgrex.query!(
+    conn,
+    "select pg_size_pretty(hypertable_size('heartbeats')) as heartbeats_size",
+    []
+  )
+```
+
+## Continuous Aggregates
+
+As should be clear by now, aggregating data over time is extremely common when working with time-series data. Often, you'll want to compute aggregations across your dataset, grouped by various attributes such as your users, location, and of course, time.
+
+TimescaleDB has a feature called [Continous Aggregates](https://docs.timescale.com/timescaledb/latest/how-to-guides/continuous-aggregates/) that dramatically improves the performance of expensive aggregations. It accomplishes this with some clever usage of [materialized views](https://www.postgresql.org/docs/current/rules-materializedviews.html), [triggers](https://www.postgresql.org/docs/15/trigger-definition.html), and hypertables, to produce views on data that update in real-time and query instaneously.
+
+Let's build a continuous aggregate for calcuating the min and max daily BPM for each user.
+
+<!-- livebook:{"attrs":{"cache_query":true,"connection":{"type":"postgres","variable":"conn"},"query":"CREATE MATERIALIZED VIEW heartbeats_minutely\nWITH (timescaledb.continuous) AS\n  SELECT time_bucket('1 minute', h.timestamp) as minute, count(h) as bpm, user_id\n  FROM heartbeats as h\n  GROUP BY minute, user_id","result_variable":"result7","timeout":null},"kind":"Elixir.KinoDB.SQLCell","livebook_object":"smart_cell"} -->
+
+```elixir
+result7 =
+  Postgrex.query!(
+    conn,
+    """
+    CREATE MATERIALIZED VIEW heartbeats_minutely
+    WITH (timescaledb.continuous) AS
+      SELECT time_bucket('1 minute', h.timestamp) as minute, count(h) as bpm, user_id
+      FROM heartbeats as h
+      GROUP BY minute, user_id
+    """,
+    []
+  )
+```
+
+<!-- livebook:{"attrs":{"cache_query":true,"connection":{"type":"postgres","variable":"conn"},"query":"SELECT add_retention_policy('heartbeats', INTERVAL '1 year');","result_variable":"result8","timeout":null},"kind":"Elixir.KinoDB.SQLCell","livebook_object":"smart_cell"} -->
+
+```elixir
+result8 =
+  Postgrex.query!(
+    conn,
+    "SELECT add_retention_policy('heartbeats', INTERVAL '1 year');",
+    []
+  )
 ```
