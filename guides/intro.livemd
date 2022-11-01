@@ -5,7 +5,8 @@ Mix.install([
   {:timescale, path: "../timescale"},
   {:kino_db, "~> 0.2.0"},
   {:jason, "~> 1.4"},
-  {:postgrex, "~> 0.16.5"}
+  {:postgrex, "~> 0.16.5"},
+  {:kino_ecto, git: "https://github.com/vorce/kino_ecto"}
 ])
 
 # Add https://github.com/vorce/kino_ecto
@@ -70,6 +71,20 @@ import Ecto.Query, except: [first: 2, last: 2]
 {:ok, repo_pid} = Kino.start_child(Repo)
 ```
 
+<!-- livebook:{"attrs":{"database":"timescale_fitness","hostname":"localhost","password":"postgres","port":5432,"type":"postgres","use_ipv6":false,"username":"postgres","variable":"conn"},"kind":"Elixir.KinoDB.ConnectionCell","livebook_object":"smart_cell"} -->
+
+```elixir
+opts = [
+  hostname: "localhost",
+  port: 5432,
+  username: "postgres",
+  password: "postgres",
+  database: "timescale_fitness"
+]
+
+{:ok, conn} = Kino.start_child({Postgrex, opts})
+```
+
 ## Creating our hypertable migration
 
 ```elixir
@@ -106,7 +121,7 @@ end
 Repo.migrate({0, Fitness.Repo.Migrations.CreateHeartbeat}, :up)
 ```
 
-## Insert some mock data
+## Generating mock data
 
 To facilitate our example, let's create two users who are tracking their heartbeats.
 
@@ -121,7 +136,7 @@ Repo.insert_all("users", users, on_conflict: :nothing)
 query =
   from(u in "users", order_by: [desc: u.fullname], select: %{id: u.id, fullname: u.fullname})
 
-[dave, alex] = Repo.all(query)
+[%{id: dave_id} = dave, %{id: alex_id} = alex] = Repo.all(query)
 ```
 
 Next, we've built a little module to help us simulate heartbeats for an entire day.
@@ -151,11 +166,9 @@ defmodule Fitness.Generator do
     end
   end
 end
-```
 
-Next, we generate heartbeats for each user, and batch insert them into the database.
+# TODO try method in https://klotzandrew.com/blog/postgres-passing-65535-parameter-limit
 
-```elixir
 batch_insert = fn heartbeats ->
   heartbeats
   |> Enum.chunk_every(100)
@@ -163,11 +176,16 @@ batch_insert = fn heartbeats ->
     Repo.insert_all("heartbeats", chunk)
   end)
 end
+```
 
-# TODO try method in https://klotzandrew.com/blog/postgres-passing-65535-parameter-limit
+<!-- livebook:{"branch_parent_index":3} -->
 
-batch_insert.(Fitness.Generator.generate_heartbeats(dave, Date.utc_today()))
-batch_insert.(Fitness.Generator.generate_heartbeats(alex, Date.utc_today()))
+## Generate small dataset
+
+Next, we generate heartbeats for each user, and batch insert them into the database.
+
+```elixir
+batch_insert.(Fitness.Generator.generate_heartbeats(alex, ~D[2022-09-22]))
 ```
 
 ## Querying with Timescale
@@ -175,13 +193,11 @@ batch_insert.(Fitness.Generator.generate_heartbeats(alex, Date.utc_today()))
 Now that we have a dataset generated, let's try some queries using Timescale [hyperfunctions](https://docs.timescale.com/api/latest/hyperfunctions/). Let's start with the basics, and try to get the first and last values in our timeseries, using the [first](https://docs.timescale.com/api/latest/hyperfunctions/first/) and [last](https://docs.timescale.com/api/latest/hyperfunctions/last/) hyperfunctions.
 
 ```elixir
-dave_id = dave.id
-
 import Timescale.Hyperfunctions
 
 Repo.all(
   from(h in "heartbeats",
-    where: h.user_id == ^dave_id,
+    where: h.user_id == ^alex_id,
     select: {first(h.timestamp, h.timestamp), last(h.timestamp, h.timestamp)}
   )
 )
@@ -196,9 +212,9 @@ First, let's explore how the `time_bucket` hyperfunction works.
 ```elixir
 Repo.all(
   from(h in "heartbeats",
-    where: h.user_id == ^dave_id,
+    where: h.user_id == ^alex_id,
     select: {h.timestamp, time_bucket(h.timestamp, "1 second")},
-    limit: 20
+    limit: 5
   )
 )
 ```
@@ -208,12 +224,138 @@ The first item in each tuple is the actual timestamp of the heartbeat, down to t
 ```elixir
 Repo.all(
   from(h in "heartbeats",
-    where: h.user_id == ^dave_id,
+    where: h.user_id == ^alex_id,
     group_by: selected_as(:minute),
     select: %{
       minute: selected_as(time_bucket(h.timestamp, "1 minute"), :minute),
       bpm: count(h)
-    }
+    },
+    limit: 5
   )
 )
+```
+
+<!-- livebook:{"branch_parent_index":3} -->
+
+## Performance with large datasets
+
+So far, we've only taken a look at a relatively small dataset.
+
+```elixir
+Repo.one(from(h in "heartbeats", select: count(h)))
+```
+
+Let's make this way more interesting by generating a months worth of heartbeats for our two users! As shown above, that should put us around 5 million rows of data. Go grab a soda, as this is gonna take a little while to execute.
+
+```elixir
+for date <- Date.range(~D[2022-10-01], ~D[2022-10-31]) do
+  batch_insert.(Fitness.Generator.generate_heartbeats(dave, date))
+end
+```
+
+<!-- livebook:{"attrs":{"cache_query":true,"connection":{"type":"postgres","variable":"conn"},"query":"select * from approximate_row_count('heartbeats');","result_variable":"result3","timeout":null},"kind":"Elixir.KinoDB.SQLCell","livebook_object":"smart_cell"} -->
+
+```elixir
+result3 = Postgrex.query!(conn, "select * from approximate_row_count('heartbeats');", [])
+```
+
+Now that we have a large dataset, let's retry our previous queries and see how they perform.
+
+<!-- livebook:{"attrs":{"cache_query":true,"connection":{"type":"postgres","variable":"conn"},"query":"explain analyze select first(h.timestamp, h.timestamp), last(h.timestamp, h.timestamp) from heartbeats as h where user_id = 1;","result_variable":"result4","timeout":null},"kind":"Elixir.KinoDB.SQLCell","livebook_object":"smart_cell"} -->
+
+```elixir
+result4 =
+  Postgrex.query!(
+    conn,
+    "explain analyze select first(h.timestamp, h.timestamp), last(h.timestamp, h.timestamp) from heartbeats as h where user_id = 1;",
+    []
+  )
+```
+
+Wow! They're still lightning fast. Timescale changes the query plan to make use of the hypertable architecture. Each chunk of our hypertable is aware of the time column, and can easily eliminate rows in bulk from our query plan.
+
+## Compression
+
+One of the most compelling features of TimescaleDB is its ability to compress data. While data storage may be relatively cheap, the rate at which time-series data grows changes the equation a bit!
+
+<!-- livebook:{"attrs":{"cache_query":true,"connection":{"type":"postgres","variable":"conn"},"query":"select pg_size_pretty(hypertable_size('heartbeats')) as heartbeats_size","result_variable":"result5","timeout":null},"kind":"Elixir.KinoDB.SQLCell","livebook_object":"smart_cell"} -->
+
+```elixir
+result5 =
+  Postgrex.query!(
+    conn,
+    "select pg_size_pretty(hypertable_size('heartbeats')) as heartbeats_size",
+    []
+  )
+```
+
+```elixir
+defmodule Fitness.Repo.Migrations.CompressHeartbeats do
+  use Ecto.Migration
+
+  import Timescale.Migration
+
+  def up do
+    enable_hypertable_compression(:heartbeats, segment_by: :user_id)
+    add_compression_policy(:heartbeats, "7 days")
+  end
+
+  def down do
+    execute("SELECT decompress_chunk(i, true) from show_chunks('heartbeats') i;")
+    flush()
+    remove_compression_policy(:test_hypertable, if_exists: true)
+    disable_hypertable_compression(:heartbeats)
+  end
+end
+
+Repo.migrate({1, Fitness.Repo.Migrations.CompressHeartbeats}, :up)
+```
+
+Now that we've compressed the table, we should observe that its size as been dramatically reduced. For some datasets, its common to see compression ratios of up to 96%.
+
+<!-- livebook:{"attrs":{"cache_query":true,"connection":{"type":"postgres","variable":"conn"},"query":"select pg_size_pretty(hypertable_size('heartbeats')) as heartbeats_size","result_variable":"result6","timeout":null},"kind":"Elixir.KinoDB.SQLCell","livebook_object":"smart_cell"} -->
+
+```elixir
+result6 =
+  Postgrex.query!(
+    conn,
+    "select pg_size_pretty(hypertable_size('heartbeats')) as heartbeats_size",
+    []
+  )
+```
+
+## Continuous Aggregates
+
+As should be clear by now, aggregating data over time is extremely common when working with time-series data. Often, you'll want to compute aggregations across your dataset, grouped by various attributes such as your users, location, and of course, time.
+
+TimescaleDB has a feature called [Continous Aggregates](https://docs.timescale.com/timescaledb/latest/how-to-guides/continuous-aggregates/) that dramatically improves the performance of expensive aggregations. It accomplishes this with some clever usage of [materialized views](https://www.postgresql.org/docs/current/rules-materializedviews.html), [triggers](https://www.postgresql.org/docs/15/trigger-definition.html), and hypertables, to produce views on data that update in real-time and query instaneously.
+
+Let's build a continuous aggregate for calcuating the min and max daily BPM for each user.
+
+<!-- livebook:{"attrs":{"cache_query":true,"connection":{"type":"postgres","variable":"conn"},"query":"CREATE MATERIALIZED VIEW heartbeats_minutely\nWITH (timescaledb.continuous) AS\n  SELECT time_bucket('1 minute', h.timestamp) as minute, count(h) as bpm, user_id\n  FROM heartbeats as h\n  GROUP BY minute, user_id","result_variable":"result7","timeout":null},"kind":"Elixir.KinoDB.SQLCell","livebook_object":"smart_cell"} -->
+
+```elixir
+result7 =
+  Postgrex.query!(
+    conn,
+    """
+    CREATE MATERIALIZED VIEW heartbeats_minutely
+    WITH (timescaledb.continuous) AS
+      SELECT time_bucket('1 minute', h.timestamp) as minute, count(h) as bpm, user_id
+      FROM heartbeats as h
+      GROUP BY minute, user_id
+    """,
+    []
+  )
+```
+
+<!-- livebook:{"attrs":{"cache_query":true,"connection":{"type":"postgres","variable":"conn"},"query":"SELECT add_retention_policy('heartbeats', INTERVAL '1 year');","result_variable":"result8","timeout":null},"kind":"Elixir.KinoDB.SQLCell","livebook_object":"smart_cell"} -->
+
+```elixir
+result8 =
+  Postgrex.query!(
+    conn,
+    "SELECT add_retention_policy('heartbeats', INTERVAL '1 year');",
+    []
+  )
 ```
