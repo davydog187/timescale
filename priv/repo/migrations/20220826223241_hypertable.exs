@@ -11,7 +11,7 @@ defmodule TimescaleApp.Repo.Migrations.Hypertable do
 
     create_hypertable(:test_hypertable, :timestamp)
     enable_hypertable_compression(:test_hypertable, segment_by: :timestamp)
-    dsiable_hypertable_compression(:test_hypertable)
+    disable_hypertable_compression(:test_hypertable)
     add_compression_policy(:test_hypertable, "60d")
     remove_compression_policy(:test_hypertable, if_exists: true)
   end
