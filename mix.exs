@@ -2,12 +2,13 @@ defmodule Timescale.MixProject do
   use Mix.Project
 
   @repo_url "https://github.com/bitfo/timescale"
+  @version "0.0.1-alpha.4"
 
   def project do
     [
       aliases: aliases(),
       app: :timescale,
-      version: "0.0.1-alpha.4",
+      version: @version,
       elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -17,10 +18,7 @@ defmodule Timescale.MixProject do
       homepage_url: @repo_url,
       description: "Easy time-series data in TimescaleDB with Ecto",
       package: package(),
-      docs: [
-        # The main page in the docs
-        main: "Timescale"
-      ]
+      docs: docs()
     ]
   end
 
@@ -34,6 +32,20 @@ defmodule Timescale.MixProject do
       links: %{
         "GitHub" => @repo_url
       }
+    ]
+  end
+
+  def docs do
+    [
+      # The main page in the docs
+      api_reference: false,
+      main: "Timescale",
+      source_url: @repo_url,
+      source_ref: "v#{@version}",
+      extra_section: "GUIDES",
+      extras: [
+        "guides/intro.livemd"
+      ]
     ]
   end
 
