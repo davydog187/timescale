@@ -81,9 +81,7 @@ defmodule Timescale.IntegrationTest do
                {5.0, ~N[1989-09-22 12:05:00.000000]}
              ]
     end
-  end
 
-  describe "time_bucket_ng/3" do
     test "can bucket by months" do
       timezone_fixture(0.0, ~U[2020-01-22 12:00:00.000000Z])
       timezone_fixture(1.0, ~U[2020-02-22 12:01:00.000000Z])
@@ -92,9 +90,7 @@ defmodule Timescale.IntegrationTest do
       timezone_fixture(4.0, ~U[2020-05-22 12:04:00.000000Z])
       timezone_fixture(5.0, ~U[2020-06-22 12:05:00.000000Z])
 
-      assert Repo.all(
-               from(t in TZTable, select: {t.field, time_bucket_ng(t.timestamp, "2 month")})
-             ) ==
+      assert Repo.all(from(t in TZTable, select: {t.field, time_bucket(t.timestamp, "2 month")})) ==
                [
                  {0.0, ~N[2020-01-01 00:00:00.000000]},
                  {1.0, ~N[2020-01-01 00:00:00.000000]},
@@ -102,33 +98,6 @@ defmodule Timescale.IntegrationTest do
                  {3.0, ~N[2020-03-01 00:00:00.000000]},
                  {4.0, ~N[2020-05-01 00:00:00.000000]},
                  {5.0, ~N[2020-05-01 00:00:00.000000]}
-               ]
-    end
-
-    test "can set an origin with a named option" do
-      timezone_fixture(0.0, ~U[2020-01-22 12:00:00.000000Z])
-      timezone_fixture(1.0, ~U[2020-02-22 12:01:00.000000Z])
-      timezone_fixture(2.0, ~U[2020-03-22 12:02:00.000000Z])
-      timezone_fixture(3.0, ~U[2020-04-22 12:03:00.000000Z])
-      timezone_fixture(4.0, ~U[2020-05-22 12:04:00.000000Z])
-      timezone_fixture(5.0, ~U[2020-06-22 12:05:00.000000Z])
-
-      assert Repo.all(
-               from(t in TZTable,
-                 select:
-                   {t.field,
-                    time_bucket_ng(t.timestamp, "2 month",
-                      origin: ^~U[2019-12-01 00:00:00.000000Z]
-                    )}
-               )
-             ) ==
-               [
-                 {0.0, ~N[2019-12-01 00:00:00.000000]},
-                 {1.0, ~N[2020-02-01 00:00:00.000000]},
-                 {2.0, ~N[2020-02-01 00:00:00.000000]},
-                 {3.0, ~N[2020-04-01 00:00:00.000000]},
-                 {4.0, ~N[2020-04-01 00:00:00.000000]},
-                 {5.0, ~N[2020-06-01 00:00:00.000000]}
                ]
     end
   end
