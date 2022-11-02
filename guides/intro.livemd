@@ -365,6 +365,26 @@ result8 =
 
 ## Filling gaps in time-series
 
+**Warning: this section requires the [TimescaleDB Toolkit](https://docs.timescale.com/timescaledb/latest/how-to-guides/hyperfunctions/install-toolkit/) to be installed, which may require building from source.**
+
+```elixir
+defmodule Fitness.Repo.Migrations.AddTimescaleToolkit do
+  use Ecto.Migration
+
+  import Timescale.Migration
+
+  def up do
+    create_timescaledb_toolkit_extension()
+  end
+
+  def down do
+    drop_timescaledb_toolkit_extension()
+  end
+end
+
+Repo.migrate({3, Fitness.Repo.Migrations.AddTimescaleToolkit}, :up)
+```
+
 With any system, there are opportunities for the system to go down. This could be due to a datacenter outage, global DNS being attacked, or simply an application configuration mishap. Regardless, it is possible for gaps in the collection of our data, which poses problems for calculations and aggregations.
 
 Luckily, TimescaleDB provides hyperfunctions for gapfilling and interpoltion so smooth over these gaps.
@@ -388,7 +408,14 @@ Now we've got 4 heartbeats, with two missing at seconds 2 and 4. We can use the 
 Repo.all(
   from(h in "heartbeats",
     where: h.user_id == ^peter_id,
-    select: time_bucket_gapfill(h.timestamp, "1 second")
+    select: %{
+      second: selected_as(time_bucket_gapfill(h.timestamp, "1 second"), :second),
+      user_id: h.user_id
+    },
+    where:
+      h.timestamp >= ^~N[2022-11-01 09:00:00] and
+        h.timestamp <= ^~N[2022-11-01 09:00:05],
+    group_by: [selected_as(:second), h.user_id]
   )
 )
 ```

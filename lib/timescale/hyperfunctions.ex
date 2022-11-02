@@ -108,7 +108,7 @@ defmodule Timescale.Hyperfunctions do
   """
   defmacro time_bucket_gapfill(field, time_bucket) do
     quote do
-      fragment("time_bucket_gapfill(?, ?)", unquote(field), unquote(time_bucket))
+      fragment("time_bucket_gapfill(?, ?)", unquote(time_bucket), unquote(field))
     end
   end
 end
