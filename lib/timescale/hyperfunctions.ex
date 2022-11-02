@@ -99,26 +99,4 @@ defmodule Timescale.Hyperfunctions do
       :origin
     ])
   end
-
-  @doc """
-  This experimental TimescaleDB function works identically to `time_bucket/2` with the added benefit that
-  you can aggregate by month, year or timezone.
-  For example, `time_bucket_ng(timestamp, "5 years")` would allow you to group results into 5 year buckets.
-
-  - `:origin` - The timestamp used to align all of the time buckets. (Postgres type: "DATE", "TIMESTAMP", or "TIMESTAMPZ")
-  - `:timezone` - The name of the timezone. (Postgres type: "TEXT")
-
-  [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/time_bucket_ng/)
-  """
-  defmacro time_bucket_ng(field, time_bucket, optional_args \\ []) do
-    dynamic_function_fragment(
-      :"timescaledb_experimental.time_bucket_ng",
-      [time_bucket, field],
-      optional_args,
-      [
-        :origin,
-        :timezone
-      ]
-    )
-  end
 end
