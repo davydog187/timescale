@@ -328,7 +328,7 @@ result6 =
 
 As should be clear by now, aggregating data over time is extremely common when working with time-series data. Often, you'll want to compute aggregations across your dataset, grouped by various attributes such as your users, location, and of course, time.
 
-TimescaleDB has a feature called [Continous Aggregates](https://docs.timescale.com/timescaledb/latest/how-to-guides/continuous-aggregates/) that dramatically improves the performance of expensive aggregations. It accomplishes this with some clever usage of [materialized views](https://www.postgresql.org/docs/current/rules-materializedviews.html), [triggers](https://www.postgresql.org/docs/15/trigger-definition.html), and hypertables, to produce views on data that update in real-time and query instaneously.
+TimescaleDB has a feature called [Continuous Aggregates](https://docs.timescale.com/timescaledb/latest/how-to-guides/continuous-aggregates/) that dramatically improves the performance of expensive aggregations. It accomplishes this with some clever usage of [materialized views](https://www.postgresql.org/docs/current/rules-materializedviews.html), [triggers](https://www.postgresql.org/docs/15/trigger-definition.html), and hypertables, to produce views on data that update in real-time and query instaneously.
 
 Let's build a continuous aggregate for calcuating the min and max daily BPM for each user.
 
