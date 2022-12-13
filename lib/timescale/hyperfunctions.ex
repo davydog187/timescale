@@ -99,4 +99,16 @@ defmodule Timescale.Hyperfunctions do
       :origin
     ])
   end
+
+  @doc """
+  Works similar to `time_bucket/2` but also activates gap-filling for the interval inferred
+  by the where clause of the query.
+
+  [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/gapfilling-interpolation/time_bucket_gapfill/)
+  """
+  defmacro time_bucket_gapfill(field, time_bucket) do
+    quote do
+      fragment("time_bucket_gapfill(?, ?)", unquote(time_bucket), unquote(field))
+    end
+  end
 end

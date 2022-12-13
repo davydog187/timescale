@@ -24,6 +24,24 @@ defmodule Timescale.Migration do
   end
 
   @doc """
+  Adds the [TimescaleDB toolkit](https://docs.timescale.com/timescaledb/latest/how-to-guides/hyperfunctions/install-toolkit/#install-and-update-timescaledb-toolkit) as a Postgres Extension
+  """
+  defmacro create_timescaledb_toolkit_extension do
+    quote do
+      Ecto.Migration.execute("CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit CASCADE")
+    end
+  end
+
+  @doc """
+  Drops the [TimescaleDB toolkit](https://docs.timescale.com/timescaledb/latest/how-to-guides/hyperfunctions/install-toolkit/#install-and-update-timescaledb-toolkit) as a Postgres Extension
+  """
+  defmacro drop_timescaledb_toolkit_extension do
+    quote do
+      Ecto.Migration.execute("DROP EXTENSION IF EXISTS timescaledb_toolkit CASCADE")
+    end
+  end
+
+  @doc """
   Creates a new [hypertable](https://docs.timescale.com/api/latest/hypertable/create_hypertable/#create-hypertable) in an Ecto Migration.
 
   ```elixir

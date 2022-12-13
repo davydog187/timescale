@@ -20,7 +20,9 @@ For our example, let's imagine we're building a fitness application that tracks 
 
 ## Setting up the Repo
 
-To get started, you'll need to set up secrets for connecting to a database. This will also require creating a Postgres database. Try the following commands in your shell:
+First and foremost, please ensure you have TimescaleDB installed on your machine using the [installation guide](https://docs.timescale.com/install/latest/self-hosted/). To go through these examples, you'll need the [Timescale Toolkit](https://docs.timescale.com/timescaledb/latest/how-to-guides/hyperfunctions/install-toolkit/) installed on your machine as well. The best way to install is with Docker, or if you're brave, build from source.
+
+Once Postgres/Timescale is up in running, you'll also need to set up secrets for connecting to a database. This will also require creating a Postgres database. Try the following commands in your shell:
 
 ```shell
 $ psql -c 'create database timescale_fitness'
@@ -123,12 +125,13 @@ Repo.migrate({0, Fitness.Repo.Migrations.CreateHeartbeat}, :up)
 
 ## Generating mock data
 
-To facilitate our example, let's create two users who are tracking their heartbeats.
+To facilitate our example, let's create three users who are tracking their heartbeats.
 
 ```elixir
 users = [
   %{fullname: "Dave Lucia"},
-  %{fullname: "Alex Koutmos"}
+  %{fullname: "Alex Koutmos"},
+  %{fullname: "Peter Ullrich"}
 ]
 
 Repo.insert_all("users", users, on_conflict: :nothing)
@@ -136,7 +139,7 @@ Repo.insert_all("users", users, on_conflict: :nothing)
 query =
   from(u in "users", order_by: [desc: u.fullname], select: %{id: u.id, fullname: u.fullname})
 
-[%{id: dave_id} = dave, %{id: alex_id} = alex] = Repo.all(query)
+[%{id: peter_id} = peter, %{id: dave_id} = dave, %{id: alex_id} = alex] = Repo.all(query)
 ```
 
 Next, we've built a little module to help us simulate heartbeats for an entire day.
@@ -182,7 +185,7 @@ end
 
 ## Generate small dataset
 
-Next, we generate heartbeats for each user, and batch insert them into the database.
+Next, we generate heartbeats for one user, and batch insert them into the database.
 
 ```elixir
 batch_insert.(Fitness.Generator.generate_heartbeats(alex, ~D[2022-09-22]))
@@ -245,7 +248,7 @@ So far, we've only taken a look at a relatively small dataset.
 Repo.one(from(h in "heartbeats", select: count(h)))
 ```
 
-Let's make this way more interesting by generating a months worth of heartbeats for our two users! As shown above, that should put us around 5 million rows of data. Go grab a soda, as this is gonna take a little while to execute.
+Let's make this way more interesting by generating a months worth of heartbeats for our second user. As shown above, that should put us around 5 million rows of data. Go grab a soda, as this is gonna take a little while to execute.
 
 ```elixir
 for date <- Date.range(~D[2022-10-01], ~D[2022-10-31]) do
@@ -358,4 +361,61 @@ result8 =
     "SELECT add_retention_policy('heartbeats', INTERVAL '1 year');",
     []
   )
+```
+
+## Filling gaps in time-series
+
+**Warning: this section requires the [TimescaleDB Toolkit](https://docs.timescale.com/timescaledb/latest/how-to-guides/hyperfunctions/install-toolkit/) to be installed, which may require building from source.**
+
+```elixir
+defmodule Fitness.Repo.Migrations.AddTimescaleToolkit do
+  use Ecto.Migration
+
+  import Timescale.Migration
+
+  def up do
+    create_timescaledb_toolkit_extension()
+  end
+
+  def down do
+    drop_timescaledb_toolkit_extension()
+  end
+end
+
+Repo.migrate({3, Fitness.Repo.Migrations.AddTimescaleToolkit}, :up)
+```
+
+With any system, there are opportunities for the system to go down. This could be due to a datacenter outage, global DNS being attacked, or simply an application configuration mishap. Regardless, it is possible for gaps in the collection of our data, which poses problems for calculations and aggregations.
+
+Luckily, TimescaleDB provides hyperfunctions for gapfilling and interpoltion so smooth over these gaps.
+
+Let's add some heartbeats in for another user every second, skipping over a few.
+
+```elixir
+Repo.insert_all("heartbeats", [
+  %{timestamp: ~N[2022-11-01 09:00:00], user_id: peter_id},
+  %{timestamp: ~N[2022-11-01 09:00:01], user_id: peter_id},
+  # No heartbeat at 9:00:02
+  %{timestamp: ~N[2022-11-01 09:00:03], user_id: peter_id},
+  # No heartbeat at 9:00:04
+  %{timestamp: ~N[2022-11-01 09:00:05], user_id: peter_id}
+])
+```
+
+Now we've got 4 heartbeats, with two missing at seconds 2 and 4. We can use the `time_bucket_gapfill/2` function to fill in heartbeats.
+
+```elixir
+Repo.all(
+  from(h in "heartbeats",
+    where: h.user_id == ^peter_id,
+    select: %{
+      second: selected_as(time_bucket_gapfill(h.timestamp, "1 second"), :second),
+      user_id: h.user_id
+    },
+    where:
+      h.timestamp >= ^~N[2022-11-01 09:00:00] and
+        h.timestamp <= ^~N[2022-11-01 09:00:05],
+    group_by: [selected_as(:second), h.user_id]
+  )
+)
 ```
