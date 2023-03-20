@@ -33,6 +33,15 @@ defmodule Timescale.Migration do
   end
 
   @doc """
+  Updates the existing [TimescaleDB toolkit](https://docs.timescale.com/timescaledb/latest/how-to-guides/hyperfunctions/install-toolkit/#install-and-update-timescaledb-toolkit) extension
+  """
+  defmacro update_timescaledb_toolkit_extension do
+    quote do
+      Ecto.Migration.execute("ALTER EXTENSION timescaledb_toolkit UPDATE")
+    end
+  end
+
+  @doc """
   Drops the [TimescaleDB toolkit](https://docs.timescale.com/timescaledb/latest/how-to-guides/hyperfunctions/install-toolkit/#install-and-update-timescaledb-toolkit) as a Postgres Extension
   """
   defmacro drop_timescaledb_toolkit_extension do
