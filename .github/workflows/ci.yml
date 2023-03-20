@@ -8,7 +8,7 @@ on:
 
 jobs:
   Credo:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
@@ -42,7 +42,7 @@ jobs:
         run: mix credo
 
   Dialyzer:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
@@ -76,7 +76,7 @@ jobs:
         run: mix dialyzer
 
   Format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
@@ -96,7 +96,7 @@ jobs:
 
   Test:
     name: Test (Elixir ${{ matrix.versions.elixir }} OTP ${{ matrix.versions.otp }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     services:
       db:
