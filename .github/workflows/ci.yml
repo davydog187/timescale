@@ -8,7 +8,7 @@ on:
 
 jobs:
   Credo:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
@@ -19,7 +19,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 25
-          elixir-version: 1.13
+          elixir-version: 1.14
 
       - name: Cache
         uses: actions/cache@v3
@@ -42,7 +42,7 @@ jobs:
         run: mix credo
 
   Dialyzer:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
@@ -53,7 +53,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 25
-          elixir-version: 1.13
+          elixir-version: 1.14
 
       - name: Cache
         uses: actions/cache@v3
@@ -76,7 +76,7 @@ jobs:
         run: mix dialyzer
 
   Format:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Checkout
@@ -86,7 +86,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 25
-          elixir-version: 1.13
+          elixir-version: 1.14
 
       - name: Install (Mix)
         run: mix deps.get
@@ -96,7 +96,7 @@ jobs:
 
   Test:
     name: Test (Elixir ${{ matrix.versions.elixir }} OTP ${{ matrix.versions.otp }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     services:
       db:
@@ -120,7 +120,7 @@ jobs:
             otp: 24
           - elixir: 1.13
             otp: 25
-          - elixir: "1.14.0-rc.1"
+          - elixir: 1.14
             otp: 25
 
     env:
