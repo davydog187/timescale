@@ -102,6 +102,38 @@ defmodule Timescale.IntegrationTest do
     end
   end
 
+  describe "time_bucket_gapfill/2" do
+    test "fills in gaps based on the where clause" do
+      naive_fixture(0.0, ~N[1989-09-22 12:00:00.000000])
+      naive_fixture(2.0, ~N[1989-09-22 12:02:00.000000])
+      naive_fixture(5.0, ~N[1989-09-22 12:05:00.000000])
+
+      start = ~N[1989-09-22 12:00:00.000000]
+      finish = ~N[1989-09-22 12:05:00.000000]
+
+      # query =
+      #   from(t in Table,
+      #     select: %{
+      #       minute: selected_as(time_bucket_gapfill(t.timestamp, "2 minutes"), :minute)
+      #     }
+      #     # where: t.timestamp >= ^start and t.timestamp <= ^finish,
+      #     # group_by: selected_as(:minute)
+      #   )
+
+      query = from(t in Table)
+
+      assert Repo.all(query) ==
+               [
+                 {0.0, ~N[1989-09-22 12:00:00.000000]},
+                 {1.0, ~N[1989-09-22 12:00:00.000000]},
+                 {2.0, ~N[1989-09-22 12:02:00.000000]},
+                 {3.0, ~N[1989-09-22 12:02:00.000000]},
+                 {4.0, ~N[1989-09-22 12:04:00.000000]},
+                 {5.0, ~N[1989-09-22 12:04:00.000000]}
+               ]
+    end
+  end
+
   def naive_fixture(value, timestamp \\ NaiveDateTime.utc_now()) do
     Repo.insert!(%Table{field: value, timestamp: timestamp})
   end

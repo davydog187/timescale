@@ -64,4 +64,11 @@ defmodule Timescale.HyperfunctionTest do
       ~s[SELECT time_bucket('5 minutes', t0."timestamp", offset => '2.5 minutes', origin => '1900-01-01') FROM "test_hypertable" AS t0]
     )
   end
+
+  test "time_bucket_gapfill/2 generates a valid query" do
+    assert_sql(
+      from(t in Table, select: time_bucket_gapfill(t.timestamp, "5 minutes")),
+      ~s[SELECT time_bucket_gapfill('5 minutes', t0."timestamp") FROM "test_hypertable" AS t0]
+    )
+  end
 end

@@ -20,7 +20,9 @@ For our example, let's imagine we're building a fitness application that tracks 
 
 ## Setting up the Repo
 
-First and foremost, please ensure you have TimescaleDB installed on your machine using the [installation guide](https://docs.timescale.com/install/latest/self-hosted/). To go through these examples, you'll need the [Timescale Toolkit](https://docs.timescale.com/timescaledb/latest/how-to-guides/hyperfunctions/install-toolkit/) installed on your machine as well. The best way to install is with Docker, or if you're brave, build from source.
+First and foremost, please ensure you have TimescaleDB installed on your machine using the [installation guide](https://docs.timescale.com/install/latest/self-hosted/).
+
+Some of these examples require the [Timescale Toolkit](https://docs.timescale.com/timescaledb/latest/how-to-guides/hyperfunctions/install-toolkit/) installed with Postgresql as well. If your machine supports it, the `timescale/timescaledb-ha` [Docker image](https://docs.timescale.com/install/latest/installation-docker/) is the easiest way to get up and running. However, if you're running on arm64 (e.g. a Macbook M1/M2), you'll need to install the toolkit by compiling it on your machine by following [these instructions](https://github.com/timescale/timescaledb-toolkit#-tools-setup).
 
 Once Postgres/Timescale is up in running, you'll also need to set up secrets for connecting to a database. This will also require creating a Postgres database. Try the following commands in your shell:
 

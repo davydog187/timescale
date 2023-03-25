@@ -107,8 +107,10 @@ defmodule Timescale.Hyperfunctions do
   [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/gapfilling-interpolation/time_bucket_gapfill/)
   """
   defmacro time_bucket_gapfill(field, time_bucket) do
-    quote do
-      fragment("time_bucket_gapfill(?, ?)", unquote(time_bucket), unquote(field))
-    end
+    # quote do
+    #   fragment("time_bucket_gapfill(?, ?)", unquote(time_bucket), unquote(field))
+    # end
+
+    dynamic_function_fragment(:time_bucket, [time_bucket, field], [], [])
   end
 end
