@@ -1,6 +1,6 @@
 # Timescale
 
-[![Build Status](https://github.com/bitfo/timescale/workflows/CI/badge.svg?branch=main)](https://github.com/bitfo/timescale/actions) [![Hex pm](https://img.shields.io/hexpm/v/timescale.svg?style=flat)](https://hex.pm/packages/timescale) [![Hexdocs.pm](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/timescale/)
+[![Build Status](https://github.com/davydog187/timescale/workflows/CI/badge.svg?branch=main)](https://github.com/davydog187/timescale/actions) [![Hex pm](https://img.shields.io/hexpm/v/timescale.svg?style=flat)](https://hex.pm/packages/timescale) [![Hexdocs.pm](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/timescale/)
 
 <!-- MDOC !-->
 
@@ -48,8 +48,6 @@ def deps do
   ]
 end
 ```
-
-_Built by [Bitfo](https://www.bitfo.com/careers/)_
 
 ## Installing Postgres / TimescaleDB on MacOS
 

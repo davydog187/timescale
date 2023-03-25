@@ -1,7 +1,7 @@
 defmodule Timescale.MixProject do
   use Mix.Project
 
-  @repo_url "https://github.com/bitfo/timescale"
+  @repo_url "https://github.com/davydog187/timescale"
   @version "0.0.1-alpha.5"
 
   def project do
