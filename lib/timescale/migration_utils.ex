@@ -88,4 +88,6 @@ defmodule Timescale.MigrationUtils do
       raise MigrationArgError, function: function_name, invalid_args: remaining_invalid_keys
     end
   end
+
+  def trim(string) when is_binary(string), do: string |> String.split() |> Enum.join(" ")
 end
