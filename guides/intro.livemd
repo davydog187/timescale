@@ -2,7 +2,7 @@
 
 ```elixir
 Mix.install([
-  {:timescale, path: "../timescale"},
+  {:timescale, "~> 0.1.0"},
   {:kino_db, "~> 0.2.0"},
   {:jason, "~> 1.4"},
   {:postgrex, "~> 0.16.5"},
