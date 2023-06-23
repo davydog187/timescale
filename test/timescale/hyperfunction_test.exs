@@ -64,4 +64,18 @@ defmodule Timescale.HyperfunctionTest do
       ~s[SELECT time_bucket('5 minutes', t0."timestamp", offset => '2.5 minutes', origin => '1900-01-01') FROM "test_hypertable" AS t0]
     )
   end
+
+  test "interpolate/1 generates a value query" do
+    assert_sql(
+      from(t in Table, select: interpolate(t.field)),
+      ~s[SELECT interpolate(t0."field") FROM "test_hypertable" AS t0]
+    )
+  end
+
+  test "locf/1 generates a value query" do
+    assert_sql(
+      from(t in Table, select: locf(t.field)),
+      ~s[SELECT locf(t0."field") FROM "test_hypertable" AS t0]
+    )
+  end
 end

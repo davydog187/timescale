@@ -111,4 +111,26 @@ defmodule Timescale.Hyperfunctions do
       fragment("time_bucket_gapfill(?, ?)", unquote(time_bucket), unquote(field))
     end
   end
+
+  @doc """
+  Fills in missing values by linear interpolation.
+
+  [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/gapfilling/time_bucket_gapfill/#interpolate)
+  """
+  defmacro interpolate(field) do
+    quote do
+      fragment("interpolate(?)", unquote(field))
+    end
+  end
+
+  @doc """
+  Fill in missing values by carrying the last observed value forward.
+
+  [Documentation](https://docs.timescale.com/api/latest/hyperfunctions/gapfilling/time_bucket_gapfill/#locf)
+  """
+  defmacro locf(field) do
+    quote do
+      fragment("locf(?)", unquote(field))
+    end
+  end
 end
