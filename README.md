@@ -36,6 +36,29 @@ defmodule MyApp.Repo.Migrations.SetupTimescale do
 end
 ```
 
+## Using the Library
+Here is an intermediate example querying a timescale reading using Timescale [hyperfunctions](https://docs.timescale.com/api/latest/hyperfunctions/) with `timescale`'s Ecto extensions.
+
+For a more comprehensive example you can check out our guide in the docs [here](https://hexdocs.pm/timescale/intro.html#content).
+
+```elixir
+import Timescale.Hyperfunctions
+
+Repo.all(
+  from(h in "heartbeats",
+    where: h.user_id == ^alex_id,
+    group_by: selected_as(:minute),
+    select: %{
+      minute: selected_as(time_bucket(h.timestamp, "1 minute"), :minute),
+      bpm: count(h)
+    },
+    limit: 5
+  )
+)
+```
+
+### Inserting Records
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
